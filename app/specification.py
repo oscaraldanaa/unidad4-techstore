@@ -9,6 +9,7 @@ class Specification:
     def __invert__(self):
         return NotSpec(self)
 
+# And
 class AndSpec(Specification):
     def __init__(self, left, right):
         self.left, self.right = left, right
