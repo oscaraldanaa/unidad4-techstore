@@ -1,5 +1,6 @@
 from domain import Order
 from decimal import Decimal
+
 class Specification:
     def is_satisfied_by(self, order):
         raise NotImplementedError
@@ -76,6 +77,5 @@ five_percent = (
     & ~ActivePromotionSpec()
 )
 
-# Combina ambas reglas con OR (si ambas se cumplen, 
-# se prioriza la del 10% según el orden de evaluación o la lógica que definas)
+# Combina ambas reglas con OR (si ambas se cumplen, se prioriza la del 10% según el orden de evaluación o la lógica que definas)
 discount_rule = ten_percent | five_percent

@@ -54,6 +54,14 @@ class OrderStatus(str, Enum):
     CANCELLED = "CANCELLED"
     RETURNED = "RETURNED"
 
+@dataclass(frozen=True)
+class DomainEvent:
+    name: str
+    order_id: str
+    occurred_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
 @dataclass
 class Order: 
     customer: Customer
@@ -80,3 +88,52 @@ class Order:
         if item.unit_price.currency != "MXN":
             raise InvalidOrderData("Solo MXN")
         self.items.append(item)
+
+    def confirm(self):
+        if self.status != OrderStatus.DRAFT:
+            raise InvalidOrderTransition("Solo DRAFT")
+        if not self.items or not self.customer.active:
+            raise InvalidOrderData("Requiere artículos y cliente activo")
+        self.status = OrderStatus.CONFIRMED
+        self.events.append(DomainEvent("OrderConfirmed", self.id))
+
+    def ship(self, tracking_number: str): 
+        if self.status != OrderStatus.CONFIRMED: 
+            raise InvalidOrderTransition("Solo CONFIRMED")
+        if not self.items: 
+            raise InvalidOrderData("Requiere artículos")
+        if not tracking_number: 
+            raise InvalidOrderData("Requiere tacking number")
+
+        self.status = OrderStatus.SHIPPED
+        self.events.append(DomainEvent("OrderShipped", self.id))
+
+    def cancel(self, reason: str):
+        if self.status != OrderStatus.CONFIRMED: 
+            raise InvalidOrderTransition("Solo CONFIRMED")
+        if not self.items: 
+            raise InvalidOrderData("Requiere artículos")
+        if not reason: 
+            raise InvalidOrderData("Requiere motivos")
+
+        self.status = OrderStatus.CANCELLED
+        self.events.append(DomainEvent("OrderCancelled", self.id))
+
+    def deliver(self):
+        if self.status != OrderStatus.SHIPPED: 
+            raise InvalidOrderTransition("Solo SHIPPED")
+        if not self.items: 
+            raise InvalidOrderData("Requiere artículos")
+
+        self.status = OrderStatus.DELIVERED
+        self.events.append(DomainEvent("OrderDelivered", self.id))
+
+    def return_order(self):
+        if self.status != OrderStatus.SHIPPED: 
+            raise InvalidOrderTransition("Solo SHIPPED")
+        if not self.items: 
+            raise InvalidOrderData("Requiere artículos")
+
+        self.status = OrderStatus.RETURNED
+        self.events.append(DomainEvent("OrderReturned", self.id))
+        
