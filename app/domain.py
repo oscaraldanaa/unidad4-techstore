@@ -92,7 +92,7 @@ class Order:
     def confirm(self):
         if self.status != OrderStatus.DRAFT:
             raise InvalidOrderTransition("Solo DRAFT")
-        if not self.items or not self.customer.active:
+        if not self.items or not self.customer.activate:
             raise InvalidOrderData("Requiere artículos y cliente activo")
         self.status = OrderStatus.CONFIRMED
         self.events.append(DomainEvent("OrderConfirmed", self.id))
