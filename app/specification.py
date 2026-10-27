@@ -1,4 +1,4 @@
-from domain import Order
+from app.domain import Order
 from decimal import Decimal
 
 class Specification:
